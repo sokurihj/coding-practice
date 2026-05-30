@@ -16,9 +16,17 @@ export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [recentCities, setRecentCities] = useState<string[]>([]);
 
-  // 앱이 처음 로드될 때 현재 위치의 날씨 자동 표시
+  // 앱이 처음 로드될 때
   useEffect(() => {
+    // localStorage에서 최근 검색 도시 읽기
+    const saved = localStorage.getItem("recentCities");
+    if (saved) {
+      setRecentCities(JSON.parse(saved));
+    }
+
+    // 현재 위치의 날씨 자동 표시
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -26,22 +34,20 @@ export default function Home() {
           await fetchWeatherByCoords(latitude, longitude);
         },
         () => {
-          // 위치 허용 거부 시 서울로 기본 설정
           setCity("Seoul");
         }
       );
     }
   }, []);
 
-  // 위도/경도로 날씨 가져오기
+  // 위도/경도로 날씨 가져오기 (서버 API 호출)
   const fetchWeatherByCoords = async (lat: number, lon: number) => {
     setLoading(true);
     setError("");
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=ko`
+        `/api/weather?lat=${lat}&lon=${lon}`
       );
 
       if (!response.ok) {
@@ -49,13 +55,7 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setWeather({
-        city: data.name,
-        temperature: Math.round(data.main.temp),
-        description: data.weather[0].description,
-        humidity: data.main.humidity,
-        windSpeed: data.wind.speed,
-      });
+      setWeather(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "날씨 정보를 가져올 수 없습니다");
     } finally {
@@ -74,10 +74,9 @@ export default function Home() {
     setWeather(null);
 
     try {
-      const apiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
-      const englishCity = translateCity(city); // 한글→영문 변환
+      const englishCity = translateCity(city);
       const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${englishCity}&appid=${apiKey}&units=metric&lang=ko`
+        `/api/weather?city=${encodeURIComponent(englishCity)}`
       );
 
       if (!response.ok) {
@@ -85,13 +84,38 @@ export default function Home() {
       }
 
       const data = await response.json();
-      setWeather({
-        city: data.name,
-        temperature: Math.round(data.main.temp),
-        description: data.weather[0].description,
-        humidity: data.main.humidity,
-        windSpeed: data.wind.speed,
-      });
+      setWeather(data);
+
+      // localStorage에 저장 (중복 제거)
+      const updated = [city, ...recentCities.filter(c => c !== city)].slice(0, 5);
+      setRecentCities(updated);
+      localStorage.setItem("recentCities", JSON.stringify(updated));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "날씨 정보를 가져올 수 없습니다");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 최근 도시 클릭 시
+  const handleRecentCity = async (recentCity: string) => {
+    setCity(recentCity);
+    const englishCity = translateCity(recentCity);
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(
+        `/api/weather?city=${encodeURIComponent(englishCity)}`
+      );
+
+      if (!response.ok) {
+        throw new Error("도시를 찾을 수 없습니다");
+      }
+
+      const data = await response.json();
+      setWeather(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "날씨 정보를 가져올 수 없습니다");
     } finally {
@@ -105,6 +129,23 @@ export default function Home() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           날씨 앱
         </h1>
+
+        {recentCities.length > 0 && (
+          <div className="w-full mb-6">
+            <p className="text-sm text-gray-600 mb-2">최근 검색</p>
+            <div className="flex gap-2 flex-wrap">
+              {recentCities.map((recentCity) => (
+                <button
+                  key={recentCity}
+                  onClick={() => handleRecentCity(recentCity)}
+                  className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm hover:bg-orange-200 transition"
+                >
+                  {recentCity}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex gap-2 mb-6">
           <input
