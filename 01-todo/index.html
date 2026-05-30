@@ -1,0 +1,258 @@
+<!--
+  ============================================================
+  나의 첫 번째 웹페이지: 할 일 목록(To-Do)
+  ------------------------------------------------------------
+  이 파일 하나(index.html) 안에 3가지가 모두 들어있어요.
+    1) HTML  : 화면의 뼈대 (글자, 입력칸, 버튼)  -> 아래 <body> 안
+    2) CSS   : 꾸미기 (색, 크기, 배치)          -> <style> 안
+    3) JS    : 동작 (추가/삭제가 일어나게)        -> <script> 안
+  파일을 브라우저로 더블클릭하면 바로 실행돼요. 설치할 게 없어요!
+  ============================================================
+-->
+<!DOCTYPE html>
+<!-- 이 줄은 "이건 최신 HTML 문서야"라고 브라우저에게 알려주는 약속이에요. -->
+<html lang="ko">
+<!-- lang="ko"는 이 페이지가 한국어라는 표시예요. -->
+
+<head>
+  <!-- <head>는 화면에 직접 보이지 않는 '설정' 영역이에요. -->
+  <meta charset="UTF-8" />
+  <!-- 한글이 깨지지 않게 해주는 설정이에요. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 휴대폰에서도 크기가 알맞게 보이도록 하는 설정이에요. -->
+  <title>나의 todo 리스트</title>
+  <!-- 브라우저 탭에 표시되는 제목이에요. -->
+
+  <style>
+    /* ===== 여기서부터 CSS(꾸미기)예요 ===== */
+
+    /* '*'는 "모든 요소"라는 뜻. 기본 여백을 0으로 초기화해요. */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box; /* 크기 계산을 직관적으로 만들어주는 설정 */
+    }
+
+    /* body = 페이지 전체. 배경색과 글꼴, 가운데 정렬을 정해요. */
+    body {
+      font-family: system-ui, sans-serif; /* 시스템 기본 글꼴 사용 */
+      background: #1a1a2e;                 /* 따뜻한 베이지색 배경 */
+      color: #2b2b2b;                      /* 글자색 (진한 회색) */
+      min-height: 100vh;                   /* 화면 높이만큼 꽉 채우기 */
+      display: flex;                       /* 내부를 유연하게 배치 */
+      justify-content: center;             /* 가로 가운데 */
+      padding: 48px 16px;                  /* 위아래 48px, 좌우 16px 여백 */
+    }
+
+    /* 할 일 목록 전체를 감싸는 카드 상자 */
+    .card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 440px;          /* 너무 넓어지지 않게 최대 너비 제한 */
+      border-radius: 16px;       /* 모서리를 둥글게 */
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06); /* 은은한 그림자 */
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 20px;
+    }
+
+    /* 입력칸과 버튼을 가로로 나란히 두는 영역 */
+    .input-row {
+      display: flex;
+      gap: 8px;                  /* 입력칸과 버튼 사이 간격 */
+      margin-bottom: 20px;
+    }
+
+    /* 할 일을 적는 입력칸 */
+    #todo-input {
+      flex: 1;                   /* 남는 공간을 다 차지 (버튼 빼고) */
+      padding: 12px 14px;
+      font-size: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      outline: none;
+    }
+    #todo-input:focus {
+      border-color: #ff6b35;     /* 클릭하면 주황색 테두리로 강조 */
+    }
+
+    /* '추가' 버튼 */
+    #add-btn {
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: #e94560;        /* 포인트 색상: 주황 */
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;           /* 마우스를 올리면 손가락 모양 */
+    }
+    #add-btn:hover {
+      background: #c73652;        /* 마우스 올리면 살짝 더 진하게 */
+    }
+
+    /* 할 일들이 쌓이는 목록 */
+    ul {
+      list-style: none;          /* 점(•) 제거 */
+
+    }
+
+    /* 할 일 한 줄 */
+    li {
+      display: flex;
+      justify-content: space-between; /* 글자는 왼쪽, 삭제버튼은 오른쪽 */
+      align-items: center;
+      padding: 12px 4px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* 할 일 텍스트: 클릭 가능하게 */
+    .todo-text {
+      flex: 1;
+      cursor: pointer;
+    }
+
+    /* 완료 표시: 취소선 + 흐려짐 */
+    .done .todo-text {
+      text-decoration: line-through;
+      opacity: 0.4;
+    }
+
+    /* 각 줄의 삭제(X) 버튼 */
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      color: #ff3b3b;            /* 마우스 올리면 빨갛게 */
+    }
+
+    /* 할 일이 하나도 없을 때 보여주는 안내 문구 */
+    .empty {
+      text-align: center;
+      color: #bbb;
+      padding: 24px 0;
+      font-size: 14px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ===== 여기서부터 HTML(화면 뼈대)이에요 ===== -->
+  <div class="card">
+    <h1>Today's Tasks'</h1>
+    <p class="subtitle">작은 것부터 하나씩 ✏️</p>
+
+    <!-- 입력칸 + 추가 버튼 -->
+    <div class="input-row">
+      <!-- input: 사용자가 글을 적는 칸. id로 이름표를 달아둬요. -->
+      <input id="todo-input" type="text" placeholder="할 일을 입력하세요" />
+      <!-- button: 누르면 동작하는 버튼. -->
+      <button id="add-btn">입력</button>
+    </div>
+
+    <!-- 할 일들이 여기(ul) 안에 li로 하나씩 추가될 거예요. -->
+    <ul id="todo-list"></ul>
+  </div>
+
+  <script>
+    /* ===== 여기서부터 JavaScript(동작)예요 ===== */
+
+    // 1) 화면에 있는 요소들을 JS가 다룰 수 있게 '붙잡아' 둬요.
+    //    document.getElementById("이름표") = 그 id를 가진 요소를 찾아오기.
+    const input = document.getElementById("todo-input"); // 입력칸
+    const addBtn = document.getElementById("add-btn");    // 추가 버튼
+    const list = document.getElementById("todo-list");    // 할 일 목록(ul)
+
+    // 2) 할 일들을 저장해 둘 '배열'(목록). 처음엔 비어 있어요.
+    let todos = [];
+
+    // 3) 현재 todos 배열을 보고 화면을 다시 그리는 함수예요.
+    //    데이터가 바뀔 때마다 이 함수를 불러서 화면을 최신 상태로 맞춰요.
+    function render() {
+      list.innerHTML = ""; // 일단 목록을 싹 비우고 처음부터 다시 그려요.
+
+      // 할 일이 하나도 없으면 안내 문구를 보여줘요.
+      if (todos.length === 0) {
+        list.innerHTML = '<p class="empty">아직 할 일이 없어요 🌱</p>';
+        return; // 여기서 함수 종료
+      }
+
+      // todos 안의 할 일을 하나씩(todo) 꺼내서 화면에 줄(li)로 만들어요.
+      todos.forEach(function (todo, index) {
+        const li = document.createElement("li"); // 새 줄(li) 만들기
+        if (todo.done) li.classList.add("done"); // 완료 상태면 done 클래스 추가
+
+        // 할 일 글자를 담을 span을 만들어요.
+        // 여기서 textContent를 쓰는 게 핵심! 사용자가 적은 글자를
+        // '그냥 글자'로만 다루기 때문에, <script> 같은 걸 적어도
+        // 코드로 실행되지 않고 안전해요. (innerHTML은 이 점이 위험해요)
+        const span = document.createElement("span");
+        span.className = "todo-text";  // 클릭 가능하게 클래스 부여
+        span.textContent = todo.text;  // todo 문자열 → todo.text
+
+        // 삭제(×) 버튼을 만들어요.
+        const delBtn = document.createElement("button");
+        delBtn.className = "delete-btn";
+        delBtn.textContent = "×";
+        delBtn.dataset.index = index; // '몇 번째 할 일인지' 번호를 적어둬요.
+
+        li.appendChild(span);   // 줄 안에 글자 넣기
+        li.appendChild(delBtn); // 줄 안에 삭제버튼 넣기
+        list.appendChild(li);   // 만든 줄을 목록(ul)에 끼워넣기
+      });
+    }
+
+    // 4) 할 일을 추가하는 함수예요.
+    function addTodo() {
+      const text = input.value.trim(); // 입력칸의 글자 (앞뒤 공백 제거)
+      if (text === "") return;         // 아무것도 안 적었으면 그냥 무시
+      todos.push({ text: text, done: false }); // 배열 맨 뒤에 새 할 일 추가
+      input.value = "";                // 입력칸 비우기
+      render();                        // 화면 다시 그리기
+      input.focus();                   // 다시 입력칸에 커서 두기 (편하게 연속 입력)
+    }
+
+    // 5) '추가' 버튼을 클릭하면 addTodo 함수가 실행되도록 연결해요.
+    addBtn.addEventListener("click", addTodo);
+
+    // 6) 입력칸에서 Enter 키를 눌러도 추가되도록 연결해요.
+    input.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && !event.isComposing) addTodo();
+    });
+
+    // 7) 삭제 버튼 클릭 처리.
+    //    각 삭제버튼마다 따로 연결하는 대신, 목록(ul) 전체에서 클릭을 감지해요.
+    //    (이런 방식을 '이벤트 위임'이라고 불러요 — 지금은 몰라도 괜찮아요!)
+    list.addEventListener("click", function (event) {
+      // 클릭된 게 삭제버튼일 때만 동작해요.
+      if (event.target.classList.contains("delete-btn")) {
+        const index = event.target.dataset.index; // 몇 번째 할 일인지 번호 꺼내기
+        todos.splice(index, 1);                    // 그 할 일을 배열에서 제거
+        render();                                  // 화면 다시 그리기
+      }
+      // 텍스트를 클릭하면 완료 상태를 켜고 꺼요.
+      if (event.target.classList.contains("todo-text")) {
+        const index = event.target.nextSibling.dataset.index;
+        todos[index].done = !todos[index].done; // true ↔ false 뒤집기
+        render();
+      }
+    });
+
+    // 8) 페이지가 처음 열렸을 때 한 번 화면을 그려요 (빈 목록 안내가 보이게).
+    render();
+  </script>
+</body>
+</html>
